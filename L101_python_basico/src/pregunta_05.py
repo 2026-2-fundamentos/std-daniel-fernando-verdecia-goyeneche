@@ -1,12 +1,28 @@
+import gzip
+from pathlib import Path
+
+def _abrir_archivo():
+    base = Path(__file__).resolve()
+    for p in [base.parent] + list(base.parents):
+        for n in ["data.csv", "data/data.csv", "data.csv.gz", "data/data.csv.gz"]:
+            f = p / n
+            if f.is_file():
+                return gzip.open(f, "rt", encoding="utf-8") if n.endswith(".gz") else open(f, "r", encoding="utf-8")
+        encontrados = list(p.glob("**/data.csv*"))
+        if encontrados:
+            f = encontrados[0]
+            return gzip.open(f, "rt", encoding="utf-8") if f.name.endswith(".gz") else open(f, "r", encoding="utf-8")
+    return open("data.csv", "r", encoding="utf-8")
+
 def pregunta_05():
-    """
-    Para cada letra de la primera columna (`letter`), encuentre el valor
-    máximo y el valor mínimo de la segunda columna (`value`). Retorne una lista
-    de tuplas `(letra, máximo, mínimo)` ordenada alfabéticamente por la letra.
-
-    Ejemplo del formato de la respuesta:
-
-        [("A", 9, 2), ("B", 9, 1), ...]
-    """
-
-    raise NotImplementedError
+    agrupados = {}
+    with _abrir_archivo() as f:
+        for linea in f:
+            columnas = linea.strip().split("\t")
+            letra = columnas[0]
+            valor = int(columnas[1])
+            if letra not in agrupados:
+                agrupados[letra] = []
+            agrupados[letra].append(valor)
+    res = [(letra, max(vals), min(vals)) for letra, vals in agrupados.items()]
+    return sorted(res)

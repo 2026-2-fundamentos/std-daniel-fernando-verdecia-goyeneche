@@ -1,13 +1,26 @@
+import gzip
+from pathlib import Path
+
+def _abrir_archivo():
+    base = Path(__file__).resolve()
+    for p in [base.parent] + list(base.parents):
+        for n in ["data.csv", "data/data.csv", "data.csv.gz", "data/data.csv.gz"]:
+            f = p / n
+            if f.is_file():
+                return gzip.open(f, "rt", encoding="utf-8") if n.endswith(".gz") else open(f, "r", encoding="utf-8")
+        encontrados = list(p.glob("**/data.csv*"))
+        if encontrados:
+            f = encontrados[0]
+            return gzip.open(f, "rt", encoding="utf-8") if f.name.endswith(".gz") else open(f, "r", encoding="utf-8")
+    return open("data.csv", "r", encoding="utf-8")
+
 def pregunta_11():
-    """
-    La cuarta columna (`codes`) contiene letras minúsculas separadas por
-    comas. Para cada una de esas letras, sume los valores de la segunda
-    columna (`value`) de los registros en los que aparece. Retorne un
-    diccionario `{letra: suma}` con las letras en orden alfabético.
-
-    Ejemplo del formato de la respuesta:
-
-        {"a": 122, "b": 49, "c": 91, ...}
-    """
-
-    raise NotImplementedError
+    sumas = {}
+    with _abrir_archivo() as f:
+        for linea in f:
+            columnas = linea.strip().split("\t")
+            valor = int(columnas[1])
+            codigos = columnas[3].split(",")
+            for c in codigos:
+                sumas[c] = sumas.get(c, 0) + valor
+    return dict(sorted(sumas.items()))

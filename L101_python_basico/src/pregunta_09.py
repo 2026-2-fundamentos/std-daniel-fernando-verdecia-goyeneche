@@ -1,12 +1,26 @@
+import gzip
+from pathlib import Path
+
+def _abrir_archivo():
+    base = Path(__file__).resolve()
+    for p in [base.parent] + list(base.parents):
+        for n in ["data.csv", "data/data.csv", "data.csv.gz", "data/data.csv.gz"]:
+            f = p / n
+            if f.is_file():
+                return gzip.open(f, "rt", encoding="utf-8") if n.endswith(".gz") else open(f, "r", encoding="utf-8")
+        encontrados = list(p.glob("**/data.csv*"))
+        if encontrados:
+            f = encontrados[0]
+            return gzip.open(f, "rt", encoding="utf-8") if f.name.endswith(".gz") else open(f, "r", encoding="utf-8")
+    return open("data.csv", "r", encoding="utf-8")
+
 def pregunta_09():
-    """
-    Cuente cuántas veces aparece cada clave en la quinta columna (`metrics`)
-    de todo el archivo. Retorne un diccionario `{clave: cantidad}` con las
-    claves en orden alfabético.
-
-    Ejemplo del formato de la respuesta:
-
-        {"aaa": 13, "bbb": 16, "ccc": 23, ...}
-    """
-
-    raise NotImplementedError
+    conteos = {}
+    with _abrir_archivo() as f:
+        for linea in f:
+            columnas = linea.strip().split("\t")
+            pares = columnas[4].split(",")
+            for item in pares:
+                clave = item.split(":")[0]
+                conteos[clave] = conteos.get(clave, 0) + 1
+    return dict(sorted(conteos.items()))

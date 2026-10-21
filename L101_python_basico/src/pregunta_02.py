@@ -1,12 +1,23 @@
+import gzip
+from pathlib import Path
+
+def _abrir_archivo():
+    base = Path(__file__).resolve()
+    for p in [base.parent] + list(base.parents):
+        for n in ["data.csv", "data/data.csv", "data.csv.gz", "data/data.csv.gz"]:
+            f = p / n
+            if f.is_file():
+                return gzip.open(f, "rt", encoding="utf-8") if n.endswith(".gz") else open(f, "r", encoding="utf-8")
+        encontrados = list(p.glob("**/data.csv*"))
+        if encontrados:
+            f = encontrados[0]
+            return gzip.open(f, "rt", encoding="utf-8") if f.name.endswith(".gz") else open(f, "r", encoding="utf-8")
+    return open("data.csv", "r", encoding="utf-8")
+
 def pregunta_02():
-    """
-    Cuente cuántos registros hay para cada letra de la primera columna
-    (`letter`). Retorne una lista de tuplas `(letra, cantidad)` ordenada
-    alfabéticamente por la letra.
-
-    Ejemplo del formato de la respuesta:
-
-        [("A", 8), ("B", 7), ("C", 5), ...]
-    """
-
-    raise NotImplementedError
+    conteos = {}
+    with _abrir_archivo() as f:
+        for linea in f:
+            letra = linea.strip().split("\t")[0]
+            conteos[letra] = conteos.get(letra, 0) + 1
+    return sorted(conteos.items())

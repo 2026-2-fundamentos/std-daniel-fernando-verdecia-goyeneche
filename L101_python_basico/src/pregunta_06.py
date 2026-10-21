@@ -1,16 +1,30 @@
+import gzip
+from pathlib import Path
+
+def _abrir_archivo():
+    base = Path(__file__).resolve()
+    for p in [base.parent] + list(base.parents):
+        for n in ["data.csv", "data/data.csv", "data.csv.gz", "data/data.csv.gz"]:
+            f = p / n
+            if f.is_file():
+                return gzip.open(f, "rt", encoding="utf-8") if n.endswith(".gz") else open(f, "r", encoding="utf-8")
+        encontrados = list(p.glob("**/data.csv*"))
+        if encontrados:
+            f = encontrados[0]
+            return gzip.open(f, "rt", encoding="utf-8") if f.name.endswith(".gz") else open(f, "r", encoding="utf-8")
+    return open("data.csv", "r", encoding="utf-8")
+
 def pregunta_06():
-    """
-    La quinta columna (`metrics`) contiene pares `clave:valor` separados por
-    comas. Para cada clave, encuentre el valor mínimo y el valor máximo que
-    aparecen en todo el archivo. Retorne una lista de tuplas
-    `(clave, mínimo, máximo)` ordenada alfabéticamente por la clave.
-
-    Observe que el orden es mínimo y luego máximo, al contrario de la
-    pregunta 5.
-
-    Ejemplo del formato de la respuesta:
-
-        [("aaa", 1, 9), ("bbb", 1, 9), ...]
-    """
-
-    raise NotImplementedError
+    metricas = {}
+    with _abrir_archivo() as f:
+        for linea in f:
+            columnas = linea.strip().split("\t")
+            pares = columnas[4].split(",")
+            for item in pares:
+                k, v = item.split(":")
+                val = int(v)
+                if k not in metricas:
+                    metricas[k] = []
+                metricas[k].append(val)
+    res = [(k, min(vals), max(vals)) for k, vals in metricas.items()]
+    return sorted(res)
