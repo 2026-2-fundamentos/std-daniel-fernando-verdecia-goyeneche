@@ -13,4 +13,12 @@ def pregunta_03():
         ...
     """
 
-    raise NotImplementedError
+    import pandas as pd
+
+    tbl0 = pd.read_csv("data/tbl0.tsv", sep="\t")
+
+    # Se agrupa por c1 y se cuenta cuántas filas tiene cada grupo.
+    # El groupby deja las categorías ordenadas alfabéticamente.
+    conteo = tbl0.groupby("c1").size()
+
+    return conteo

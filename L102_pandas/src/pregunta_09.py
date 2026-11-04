@@ -13,4 +13,12 @@ def pregunta_09():
         ...
     """
 
-    raise NotImplementedError
+    import pandas as pd
+
+    tbl0 = pd.read_csv("data/tbl0.tsv", sep="\t")
+
+    # La fecha viene como texto "año-mes-día", entonces se separa por "-"
+    # y se toma la primera parte, que es el año (queda como texto)
+    tbl0["year"] = tbl0["c3"].str.split("-").str[0]
+
+    return tbl0

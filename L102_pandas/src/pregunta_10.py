@@ -15,4 +15,19 @@ def pregunta_10():
         ...
     """
 
-    raise NotImplementedError
+    import pandas as pd
+
+    tbl0 = pd.read_csv("data/tbl0.tsv", sep="\t")
+
+    # Se ordena por c1 y por c2 mientras c2 todavía es número,
+    # así los valores quedan de menor a mayor dentro de cada categoría
+    tbl0 = tbl0.sort_values(["c1", "c2"])
+
+    # c2 se pasa a texto para poder unirlo con ":"
+    tbl0["c2"] = tbl0["c2"].astype(str)
+
+    # Se une cada grupo en un solo texto separado por ":"
+    resultado = tbl0.groupby("c1")["c2"].apply(lambda x: ":".join(x))
+
+    # La Serie se convierte en DataFrame con la columna c2
+    return resultado.to_frame()

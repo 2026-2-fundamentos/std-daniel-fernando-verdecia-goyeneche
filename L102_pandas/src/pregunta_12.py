@@ -15,4 +15,20 @@ def pregunta_12():
         ...
     """
 
-    raise NotImplementedError
+    import pandas as pd
+
+    tbl2 = pd.read_csv("data/tbl2.tsv", sep="\t")
+
+    # Se forma el texto c5a:c5b en cada fila (c5b es número, se pasa a texto)
+    tbl2["c5"] = tbl2["c5a"] + ":" + tbl2["c5b"].astype(str)
+
+    # Se ordena por c0 y por el texto c5 para que queden en orden alfabético
+    tbl2 = tbl2.sort_values(["c0", "c5"])
+
+    # Para cada c0 se unen los textos separados por comas
+    resultado = tbl2.groupby("c0")["c5"].apply(lambda x: ",".join(x))
+
+    # c0 pasa de ser índice a ser una columna normal
+    resultado = resultado.reset_index()
+
+    return resultado

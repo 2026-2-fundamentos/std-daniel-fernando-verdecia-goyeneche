@@ -13,4 +13,11 @@ def pregunta_05():
         ...
     """
 
-    raise NotImplementedError
+    import pandas as pd
+
+    tbl0 = pd.read_csv("data/tbl0.tsv", sep="\t")
+
+    # Valor máximo de c2 para cada categoría de c1
+    maximos = tbl0.groupby("c1")["c2"].max()
+
+    return maximos

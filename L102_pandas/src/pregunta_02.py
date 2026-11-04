@@ -8,4 +8,10 @@ def pregunta_02():
         4
     """
 
-    raise NotImplementedError
+    import pandas as pd
+
+    # Se lee la tabla, las columnas están separadas por tabuladores
+    tbl0 = pd.read_csv("data/tbl0.tsv", sep="\t")
+
+    # La cantidad de columnas es la segunda posición de shape
+    return tbl0.shape[1]

@@ -1,46 +1,102 @@
+import glob
+import os
 import pandas as pd
 
 
 def clean_campaign_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """
-    Los datos de una campaña de mercadeo bancario llegaron repartidos en diez
-    archivos comprimidos, `data/bank-marketing-campaing-*.csv.gz`, con
-    información mezclada del cliente, de la campaña y del contexto económico.
-    Su tarea es leerlos directamente desde los archivos comprimidos, sin
-    descomprimirlos a mano, y separarlos en tres tablas limpias.
+    files = sorted(glob.glob("data/*.csv.gz"))
+    dfs = [pd.read_csv(f) for f in files]
+    df = pd.concat(dfs, ignore_index=True)
 
-    Guarde cada tabla como un CSV sin comprimir en `submission/`, sin el índice
-    de Pandas y con las columnas en el orden indicado:
+    if "client_id" not in df.columns:
+        if "Unnamed: 0" in df.columns:
+            df["client_id"] = df["Unnamed: 0"]
+        else:
+            df["client_id"] = df.index
 
-    1. `client.csv`: `client_id`, `age`, `job`, `marital`, `education`,
-       `credit_default` y `mortgage`.
-       - En `job`, elimine los puntos y cambie los guiones por guiones bajos.
-       - En `education`, cambie los puntos por guiones bajos y deje el valor
-         `unknown` como faltante.
-       - En `credit_default` y `mortgage`, escriba 1 si el valor es `yes` y 0
-         en cualquier otro caso.
+    df = df.rename(
+        columns={
+            "default": "credit_default",
+            "housing": "mortgage",
+            "campaign": "number_contacts",
+            "duration": "contact_duration",
+            "previous": "previous_campaign_contacts",
+            "poutcome": "previous_outcome",
+            "y": "campaign_outcome",
+            "cons.price.idx": "cons_price_idx",
+            "euribor3m": "euribor_three_months",
+        }
+    )
 
-    2. `campaign.csv`: `client_id`, `number_contacts`, `contact_duration`,
-       `previous_campaign_contacts`, `previous_outcome`, `campaign_outcome` y
-       `last_contact_date`.
-       - En `previous_outcome`, escriba 1 si el valor es `success` y 0 en
-         cualquier otro caso.
-       - En `campaign_outcome`, escriba 1 si el valor es `yes` y 0 en
-         cualquier otro caso.
-       - Construya `last_contact_date` a partir de las columnas `month` y
-         `day`, usando el año 2022 y el formato `AAAA-MM-DD`.
+    df = df.sort_values("client_id").reset_index(drop=True)
 
-    3. `economics.csv`: `client_id`, `cons_price_idx` y
-       `euribor_three_months`.
+    client = df[
+        [
+            "client_id",
+            "age",
+            "job",
+            "marital",
+            "education",
+            "credit_default",
+            "mortgage",
+        ]
+    ].copy()
 
-    La función también debe retornar las tres tablas, en el orden `client`,
-    `campaign` y `economics`.
+    client["job"] = (
+        client["job"]
+        .str.replace(".", "", regex=False)
+        .str.replace("-", "_", regex=False)
+    )
+    client["education"] = (
+        client["education"]
+        .str.replace(".", "_", regex=False)
+        .replace("unknown", pd.NA)
+    )
+    client["credit_default"] = (client["credit_default"] == "yes").astype(int)
+    client["mortgage"] = (client["mortgage"] == "yes").astype(int)
 
-    Ejemplo del formato de `campaign.csv`:
+    month_map = {
+        "jan": "01",
+        "feb": "02",
+        "mar": "03",
+        "apr": "04",
+        "may": "05",
+        "jun": "06",
+        "jul": "07",
+        "aug": "08",
+        "sep": "09",
+        "oct": "10",
+        "nov": "11",
+        "dec": "12",
+    }
 
-        client_id,number_contacts,contact_duration,...,last_contact_date
-        0,1,261,...,2022-05-13
-        ...
-    """
+    month_str = (
+        df["month"]
+        .astype(str)
+        .str.lower()
+        .map(month_map)
+        .fillna(df["month"].astype(str).str.zfill(2))
+    )
+    day_str = df["day"].astype(str).str.zfill(2)
+    last_contact_date = "2022-" + month_str + "-" + day_str
 
-    raise NotImplementedError
+    campaign = pd.DataFrame(
+        {
+            "client_id": df["client_id"],
+            "number_contacts": df["number_contacts"],
+            "contact_duration": df["contact_duration"],
+            "previous_campaign_contacts": df["previous_campaign_contacts"],
+            "previous_outcome": (df["previous_outcome"] == "success").astype(int),
+            "campaign_outcome": (df["campaign_outcome"] == "yes").astype(int),
+            "last_contact_date": last_contact_date,
+        }
+    )
+
+    economics = df[["client_id", "cons_price_idx", "euribor_three_months"]].copy()
+
+    os.makedirs("submission", exist_ok=True)
+    client.to_csv("submission/client.csv", index=False)
+    campaign.to_csv("submission/campaign.csv", index=False)
+    economics.to_csv("submission/economics.csv", index=False)
+
+    return client, campaign, economics
