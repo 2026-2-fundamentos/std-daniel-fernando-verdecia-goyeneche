@@ -25,3 +25,7 @@
 --
 --  Escriba su consulta debajo de esta línea.
 --
+SELECT STRFTIME('%Y', c23) AS year, AVG(c21) AS avg_c21
+FROM tbl2
+GROUP BY year
+ORDER BY year;
