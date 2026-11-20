@@ -1,0 +1,15 @@
+{
+    "best_params": {
+        "preprocessor__num__poly__degree": 3,
+        "regressor__alpha": 10.0
+    },
+    "cv_rmse": 2.8904770418802403,
+    "train_rmse": 2.454032713448113,
+    "test_rmse": 2.2501493263031342,
+    "train_mae": 1.7557765068629507,
+    "test_mae": 1.6851278479803633,
+    "train_r2": 0.9039451449796918,
+    "test_r2": 0.9058302607067545,
+    "n_train": 318,
+    "n_test": 80
+}
